@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>《夯宝啦》交互原型</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: #f0e8d0;
+  font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* ===== 手机外壳 ===== */
+.phone-frame {
+  width: 375px;
+  height: 812px;
+  background: #FFF8E7;
+  border-radius: 44px;
+  border: 8px solid #222;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.4), inset 0 0 0 2px #555;
+  flex-shrink: 0;
+}
+
+/* 状态栏 */
+.status-bar {
+  background: rgba(255,255,255,0.9);
+  padding: 10px 20px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  position: relative;
+  z-index: 100;
+}
+.status-icons { display: flex; gap: 4px; align-items: center; font-size: 11px; }
+
+/* ===== 页面容器 ===== */
+.page {
+  display: none;
+  width: 100%;
+  height: 742px; /* 812 - status(36) - navbar(60) - border(8*2) ≈ */
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #FFF8E7;
+  position: absolute;
+  top: 36px;
+  left: 0;
+  padding-bottom: 0;
+}
+.page.active { display: block; }
+.page::-webkit-scrollbar { display: none; }
+
+/* ===== 底部导航 ===== */
+.navbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  display: flex;
+  z-index: 200;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 10px;
+  color: #999;
+}
+.nav-item.active { color: #F97316; }
+.nav-item .nav-icon { font-size: 22px; }
+
+/* ===== 通用组件 ===== */
+.page-header {
+  background: #fff;
+  padding: 12px 16px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0e8d0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.page-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.star-icon { font-size: 16px; }
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.btn-orange {
+  background: linear-gradient(135deg, #FF8C00, #F97316);
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+  box-shadow: 0 4px 12px rgba(249,115,22,0.4);
+}
+.btn-orange:active { transform: scale(0.97); }
+
+.btn-white {
+  background: #fff;
+  color: #F97316;
+  border: 2px solid #F97316;
+  border-radius: 24px;
+  padding: 11px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.btn-white:active { transform: scale(0.97); }
+
+.btn-yellow {
+  background: linear-gradient(135deg, #FCD34D, #FBBF24);
+  color: #92400E;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  box-shadow: 0 3px 8px rgba(251,191,36,0.4);
+}
+.btn-yellow:active { transform: scale(0.96); }
+
+.tag-orange {
+  background: linear-gradient(135deg, #FF8C00, #F97316);
+  color: #fff;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.tag-yellow {
+  background: #FEF3C7;
+  color: #92400E;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tag-green {
+  background: #D1FAE5;
+  color: #065F46;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ==================== PAGE 1: 首页签文 ==================== */
+#page-fortune {
+  background: linear-gradient(180deg, #FFFBEB 0%, #FFF8E7 100%);
+}
+
+.fortune-header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.8);
+}
+.fortune-logo {
+  font-size: 32px;
+  animation: bounce 2s infinite;
+}
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.fortune-title-block { flex: 1; }
+.fortune-title { font-size: 22px; font-weight: 900; color: #DC2626; }
+.fortune-date { font-size: 11px; color: #888; margin-top: 1px; }
+
+.fortune-card {
+  margin: 12px 16px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 6px 24px rgba(249,115,22,0.12);
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.fortune-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #FF8C00, #FCD34D, #FF8C00);
+}
+.fortune-star-icon {
+  font-size: 40px;
+  margin-bottom: 6px;
+  animation: spin-slow 4s linear infinite;
+}
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.fortune-type {
+  font-size: 36px;
+  font-weight: 900;
+  color: #DC2626;
+  margin-bottom: 4px;
+}
+.fortune-subtitle { font-size: 13px; color: #888; margin-bottom: 14px; }
+.fortune-poem {
+  background: #FFFBEB;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.fortune-poem p {
+  font-size: 15px;
+  color: #44403C;
+  line-height: 2;
+  letter-spacing: 2px;
+}
+.fortune-bonus {
+  background: linear-gradient(135deg, #FCD34D, #FBBF24);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #92400E;
+}
+
+.fortune-info {
+  margin: 0 16px 12px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.fortune-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+  padding: 4px 0;
+}
+.fortune-info-row + .fortune-info-row { border-top: 1px solid #FEF3C7; margin-top: 6px; padding-top: 10px; }
+.stamina-dots { display: flex; gap: 4px; margin-left: auto; }
+.stamina-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #F97316;
+  box-shadow: 0 0 4px rgba(249,115,22,0.5);
+}
+.stamina-dot.empty { background: #E5E7EB; box-shadow: none; }
+
+.fortune-actions { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ===== 摇签全屏覆盖层 ===== */
+.sign-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #FFF3C4 0%, #FFEAA7 50%, #FFD93D 100%);
+  z-index: 300;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  overflow: hidden;
+}
+.sign-overlay.show { display: flex; }
+
+/* 背景装饰圆 */
+.sign-overlay::before {
+  content: '';
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,200,50,0.4) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -60%);
+  pointer-events: none;
+}
+
+.sign-overlay-title {
+  font-size: 13px;
+  color: #92400E;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+.sign-overlay-date {
+  font-size: 12px;
+  color: #B45309;
+  margin-bottom: 32px;
+  opacity: 0.7;
+}
+
+/* ===== CSS签筒 ===== */
+.sign-tube-wrap {
+  position: relative;
+  width: 120px;
+  height: 160px;
+  cursor: pointer;
+  margin-bottom: 28px;
+  transform-origin: center bottom;
+}
+.sign-tube-wrap.shaking {
+  animation: tube-shake 0.12s ease-in-out infinite;
+}
+.sign-tube-wrap.throwing {
+  animation: tube-throw 0.5s ease-in forwards;
+}
+@keyframes tube-shake {
+  0%   { transform: rotate(-12deg) translateX(-4px); }
+  25%  { transform: rotate(12deg)  translateX(4px); }
+  50%  { transform: rotate(-10deg) translateX(-3px); }
+  75%  { transform: rotate(10deg)  translateX(3px); }
+  100% { transform: rotate(-12deg) translateX(-4px); }
+}
+@keyframes tube-throw {
+  0%   { transform: rotate(0deg)   scale(1);   opacity: 1; }
+  40%  { transform: rotate(-20deg) scale(1.1); opacity: 1; }
+  100% { transform: rotate(15deg)  scale(0.5) translateY(-30px); opacity: 0; }
+}
+
+/* 签筒筒身 */
+.tube-body {
+  width: 100px;
+  height: 130px;
+  background: linear-gradient(135deg, #FF9A3C 0%, #FF6B00 40%, #E55A00 100%);
+  border-radius: 12px 12px 18px 18px;
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  box-shadow: inset -8px 0 16px rgba(0,0,0,0.15), inset 4px 0 8px rgba(255,200,100,0.3), 0 8px 24px rgba(220,80,0,0.35);
+  overflow: hidden;
+}
+/* 筒身高光 */
+.tube-body::before {
+  content: '';
+  position: absolute;
+  left: 10px; top: 10px;
+  width: 18px; height: 80px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%);
+  border-radius: 10px;
+}
+/* 筒身底部阴影线 */
+.tube-body::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 20px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 0 0 18px 18px;
+}
+
+/* 顶部边框圈 */
+.tube-top-ring {
+  width: 110px;
+  height: 14px;
+  background: linear-gradient(180deg, #C8A040 0%, #A07820 50%, #C8A040 100%);
+  border-radius: 6px 6px 0 0;
+  position: absolute;
+  top: 20px;
+  left: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+/* 底部边框圈 */
+.tube-bottom-ring {
+  width: 110px;
+  height: 12px;
+  background: linear-gradient(180deg, #C8A040 0%, #A07820 50%, #C8A040 100%);
+  border-radius: 0 0 8px 8px;
+  position: absolute;
+  bottom: 0;
+  left: 5px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+
+/* 中央"运"字徽章 */
+.tube-badge {
+  position: absolute;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FDE68A, #F59E0B);
+  border: 3px solid #92400E;
+  display: flex; align-items: center; justify-content: center;
+  bottom: 36px; left: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 3px rgba(255,255,255,0.4);
+  font-size: 22px;
+  font-weight: 900;
+  color: #DC2626;
+  font-family: 'STKaiti', 'KaiTi', serif;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  z-index: 2;
+}
+/* 徽章外圈纹样 */
+.tube-badge::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(146,64,14,0.4);
+}
+
+/* ===== 签（星星笑脸）===== */
+.sign-sticks {
+  position: absolute;
+  top: 0; left: 0;
+  width: 120px;
+  height: 60px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  z-index: 5;
+}
+.sign-stick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: center bottom;
+}
+/* 签的星星头 */
+.sign-star {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+  animation: sign-wobble var(--delay, 1.2s) ease-in-out infinite alternate;
+  position: relative;
+}
+@keyframes sign-wobble {
+  0%   { transform: rotate(-6deg); }
+  100% { transform: rotate(6deg);  }
+}
+/* 签的杆 */
+.sign-rod {
+  width: 5px;
+  height: 40px;
+  background: linear-gradient(180deg, #D1D5DB 0%, #9CA3AF 50%, #6B7280 100%);
+  border-radius: 3px;
+  box-shadow: inset 1px 0 2px rgba(255,255,255,0.5);
+}
+
+/* ===== 签飞出动画 ===== */
+.sign-flying {
+  position: absolute;
+  font-size: 24px;
+  pointer-events: none;
+  z-index: 400;
+  animation: sign-fly var(--duration, 0.8s) cubic-bezier(.17,.67,.35,1) forwards;
+  transform-origin: bottom center;
+}
+@keyframes sign-fly {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  30%  { transform: translate(var(--fx1), var(--fy1)) rotate(var(--fr1)) scale(1.3); opacity: 1; }
+  70%  { transform: translate(var(--fx2), var(--fy2)) rotate(var(--fr2)) scale(1.1); opacity: 1; }
+  100% { transform: translate(var(--fx3), var(--fy3)) rotate(var(--fr3)) scale(0.6); opacity: 0; }
+}
+
+/* 签文揭示动画 */
+.fortune-reveal {
+  animation: fortune-in 0.6s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes fortune-in {
+  0%   { opacity: 0; transform: scale(0.7) translateY(30px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 提示文字 */
+.sign-hint-text {
+  color: #92400E;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 4px;
+}
+.sign-sub-text {
+  color: #B45309;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 6px;
+  opacity: 0.8;
+}
+.sign-shake-tip {
+  color: #92400E;
+  font-size: 13px;
+  margin-top: 16px;
+  opacity: 0.7;
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,100% { opacity: 0.7; }
+  50% { opacity: 0.3; }
+}
+
+/* ==================== PAGE 2: 矿脉选择 ==================== */
+#page-mine { background: #FFF8E7; }
+
+.mine-cards { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+.mine-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s;
+  position: relative;
+}
+.mine-card:active { transform: scale(0.98); }
+.mine-card.recommended { border: 2px solid #F97316; }
+.mine-recommend-badge {
+  position: absolute;
+  top: -1px; right: 14px;
+  background: linear-gradient(135deg, #FF8C00, #F97316);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 0 0 10px 10px;
+}
+.mine-card-top { display: flex; align-items: center; gap: 12px; }
+.mine-emoji { font-size: 36px; }
+.mine-info { flex: 1; }
+.mine-name { font-size: 17px; font-weight: 800; color: #1C1917; }
+.mine-desc { font-size: 12px; color: #888; margin-top: 2px; }
+.mine-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.mine-tag {
+  background: #FEF3C7;
+  color: #92400E;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mine-tag.rare {
+  background: #EDE9FE;
+  color: #5B21B6;
+}
+
+/* ==================== PAGE 3: 挖矿游戏 ==================== */
+#page-game {
+  background: #FFF8E7;
+  padding-bottom: 0 !important;
+  overflow: hidden;
+}
+
+.game-header {
+  background: #fff;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f0e8d0;
+}
+.game-mine-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1C1917;
+  background: #FEF3C7;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+.game-bonus {
+  font-size: 12px;
+  color: #DC2626;
+  font-weight: 700;
+  background: #FEE2E2;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.game-stamina {
+  margin-left: auto;
+  font-size: 12px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.game-progress-bar {
+  height: 8px;
+  background: #E5E7EB;
+  position: relative;
+  overflow: hidden;
+}
+.game-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF8C00, #FCD34D);
+  transition: width 1s linear;
+  width: 100%;
+}
+
+.game-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #fff;
+}
+.game-timer {
+  font-size: 28px;
+  font-weight: 900;
+  color: #DC2626;
+  font-variant-numeric: tabular-nums;
+}
+.game-score-row {
+  display: flex;
+  gap: 8px;
+}
+.score-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.score-gold { background: #FEF3C7; color: #92400E; }
+.score-gem { background: #EDE9FE; color: #5B21B6; }
+
+/* 矿场区域 */
+.mine-field {
+  background: linear-gradient(180deg, #8B6F47 0%, #6B4F2A 60%, #5A3D1A 100%);
+  margin: 0 10px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  height: 310px;
+}
+.mine-field-texture {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 60px 30px at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 100%),
+    radial-gradient(ellipse 40px 20px at 70% 60%, rgba(255,255,255,0.04) 0%, transparent 100%);
+}
+
+/* 矿石 */
+.ore {
+  position: absolute;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+  user-select: none;
+}
+.ore:active { transform: scale(0.9) !important; }
+.ore-body {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.2);
+  position: relative;
+}
+.ore-hp {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+}
+.ore-hp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FCD34D;
+}
+.ore-hp-dot.empty { background: rgba(255,255,255,0.3); }
+
+/* 矿石类型 */
+.ore-normal .ore-body { background: linear-gradient(135deg, #9CA3AF, #6B7280); }
+.ore-hard .ore-body { background: linear-gradient(135deg, #57534E, #292524); }
+.ore-rare .ore-body {
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  box-shadow: 0 0 16px rgba(251,191,36,0.7), 0 4px 10px rgba(0,0,0,0.3);
+  animation: rare-glow 1.5s ease-in-out infinite alternate;
+}
+@keyframes rare-glow {
+  from { box-shadow: 0 0 10px rgba(251,191,36,0.6), 0 4px 10px rgba(0,0,0,0.3); }
+  to { box-shadow: 0 0 24px rgba(251,191,36,0.9), 0 4px 10px rgba(0,0,0,0.3); }
+}
+
+/* 矿石打击动画 */
+.ore.hit { animation: hit-shake 0.25s ease; }
+@keyframes hit-shake {
+  0%,100% { transform: translate(0,0) rotate(0deg); }
+  25% { transform: translate(-4px,-2px) rotate(-5deg); }
+  75% { transform: translate(4px,2px) rotate(5deg); }
+}
+
+/* 浮动文字 */
+.float-text {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  pointer-events: none;
+  animation: float-up 1.2s ease-out forwards;
+  z-index: 50;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+@keyframes float-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  30% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+}
+.float-text.gold { color: #FCD34D; }
+.float-text.gem { color: #A78BFA; }
+
+/* 爆炸粒子 */
+.particle {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-explode 0.6s ease-out forwards;
+  z-index: 40;
+}
+@keyframes particle-explode {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0) translate(var(--px), var(--py)); }
+}
+
+.game-info-bar {
+  margin: 8px 10px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.game-tip {
+  background: #FFFBEB;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #92400E;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.game-end-btn {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+/* ==================== PAGE 4: 结算 ==================== */
+#page-result { background: #FFF8E7; }
+
+.result-score-card {
+  margin: 12px 16px;
+  background: linear-gradient(135deg, #FF8C00, #F97316);
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(249,115,22,0.4);
+}
+.result-score-num {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.result-score-label { font-size: 16px; margin-bottom: 8px; opacity: 0.9; }
+.result-score-sub { font-size: 13px; opacity: 0.85; margin-top: 6px; }
+
+.result-harvest {
+  margin: 0 16px 12px;
+  display: flex;
+  gap: 8px;
+}
+.harvest-item {
+  flex: 1;
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px 8px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.harvest-emoji { font-size: 28px; margin-bottom: 4px; }
+.harvest-name { font-size: 11px; color: #888; margin-bottom: 2px; }
+.harvest-amount { font-size: 16px; font-weight: 800; color: #1C1917; }
+.harvest-price { font-size: 11px; color: #10B981; font-weight: 600; margin-top: 2px; }
+
+.result-market {
+  margin: 0 16px 12px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.market-title { font-size: 14px; font-weight: 800; color: #333; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.market-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid #FEF3C7;
+  font-size: 13px;
+}
+.market-row:last-child { border-bottom: none; }
+.market-name { color: #555; display: flex; align-items: center; gap: 6px; }
+.market-price { font-weight: 700; color: #1C1917; }
+.market-change { font-size: 12px; font-weight: 700; }
+.market-change.up { color: #EF4444; }
+.market-change.down { color: #10B981; }
+
+.result-rank {
+  margin: 0 16px 12px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.rank-title { font-size: 14px; font-weight: 800; color: #333; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #FEF3C7;
+  font-size: 13px;
+}
+.rank-row:last-child { border-bottom: none; }
+.rank-badge {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.rank-1 { background: linear-gradient(135deg, #FCD34D, #F59E0B); color: #fff; }
+.rank-2 { background: linear-gradient(135deg, #D1D5DB, #9CA3AF); color: #fff; }
+.rank-3 { background: linear-gradient(135deg, #D97706, #B45309); color: #fff; }
+.rank-n { background: #F3F4F6; color: #666; }
+.rank-name { flex: 1; color: #333; font-weight: 600; }
+.rank-score { font-weight: 700; color: #F97316; }
+
+.result-actions { padding: 0 16px 16px; display: flex; gap: 10px; }
+.result-actions .btn-orange { flex: 1; }
+.result-actions .btn-white { flex: 1; }
+
+/* ==================== PAGE 5: 商城 ==================== */
+#page-shop { background: #FFF8E7; }
+
+.shop-header {
+  background: #fff;
+  padding: 12px 16px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0e8d0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.shop-score-badge {
+  background: linear-gradient(135deg, #FCD34D, #FBBF24);
+  color: #92400E;
+  border-radius: 14px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  background: #fff;
+  border-bottom: 1px solid #f0e8d0;
+}
+.shop-tabs::-webkit-scrollbar { display: none; }
+.shop-tab {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: #F3F4F6;
+  color: #666;
+  transition: all 0.15s;
+}
+.shop-tab.active {
+  background: linear-gradient(135deg, #FF8C00, #F97316);
+  color: #fff;
+}
+
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+.shop-item {
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.shop-item-icon { font-size: 32px; text-align: center; }
+.shop-item-name { font-size: 13px; font-weight: 800; color: #1C1917; text-align: center; }
+.shop-item-desc { font-size: 11px; color: #888; text-align: center; line-height: 1.4; }
+.shop-item-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  margin-top: auto;
+}
+.shop-item-btn.owned { background: #D1FAE5; color: #065F46; }
+.shop-item-btn.buy { background: linear-gradient(135deg, #FCD34D, #FBBF24); color: #92400E; }
+
+/* ==================== PAGE 6: 排行榜 ==================== */
+#page-rank { background: #FFF8E7; }
+
+.rank-tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #f0e8d0;
+}
+.rank-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+.rank-tab.active {
+  color: #F97316;
+  border-bottom-color: #F97316;
+}
+
+.rank-podium {
+  background: linear-gradient(180deg, #FF8C00 0%, #F97316 100%);
+  padding: 16px 16px 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+}
+.podium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.podium-avatar {
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: 3px solid rgba(255,255,255,0.6);
+}
+.podium-1 .podium-avatar { width: 60px; height: 60px; }
+.podium-2 .podium-avatar, .podium-3 .podium-avatar { width: 48px; height: 48px; }
+.podium-name { font-size: 12px; color: #fff; font-weight: 700; }
+.podium-score { font-size: 11px; color: rgba(255,255,255,0.85); }
+.podium-badge { font-size: 20px; }
+
+.podium-block {
+  background: rgba(255,255,255,0.25);
+  border-radius: 8px 8px 0 0;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+.podium-1 .podium-block { height: 60px; }
+.podium-2 .podium-block { height: 44px; }
+.podium-3 .podium-block { height: 32px; }
+
+.rank-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.rank-list-item {
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.rank-list-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.rank-num-4 { background: #FEF3C7; color: #92400E; }
+.rank-num-5 { background: #EDE9FE; color: #5B21B6; }
+.rank-num-6 { background: #DBEAFE; color: #1D4ED8; }
+.rank-num-7 { background: #FCE7F3; color: #9D174D; }
+.rank-list-avatar { font-size: 24px; }
+.rank-list-name { flex: 1; font-size: 14px; font-weight: 700; color: #1C1917; }
+.rank-list-score { font-size: 14px; font-weight: 800; color: #F97316; }
+
+/* ==================== PAGE 7: 我的 ==================== */
+#page-profile { background: #FFF8E7; }
+
+.profile-header {
+  background: linear-gradient(135deg, #FF8C00, #F97316);
+  padding: 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.profile-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  border: 3px solid rgba(255,255,255,0.7);
+}
+.profile-name { font-size: 18px; font-weight: 800; color: #fff; }
+.profile-subtitle { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: #fff;
+  border-bottom: 1px solid #f0e8d0;
+}
+.stat-item {
+  padding: 14px;
+  text-align: center;
+  border-right: 1px solid #f0e8d0;
+}
+.stat-item:last-child { border-right: none; }
+.stat-num { font-size: 20px; font-weight: 900; color: #F97316; }
+.stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+
+.profile-section {
+  margin: 12px 16px;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.profile-section-title {
+  padding: 12px 16px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid #f0e8d0;
+  cursor: pointer;
+}
+.profile-row:first-of-type { border-top: none; }
+.profile-row-icon { font-size: 20px; }
+.profile-row-label { flex: 1; font-size: 14px; color: #333; font-weight: 600; }
+.profile-row-right { font-size: 18px; color: #ccc; }
+
+</style>
+</head>
+<body>
+<div class="phone-frame" id="app">
+
+  <!-- 状态栏 -->
+  <div class="status-bar">
+    <span class="time" id="statusTime">11:08</span>
+    <div class="status-icons">
+      <span>●●●</span>
+      <span>WiFi</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 1: 首页 ==================== -->
+  <div class="page active" id="page-fortune">
+    <!-- 顶部 -->
+    <div class="fortune-header">
+      <div class="fortune-logo">🪄</div>
+      <div class="fortune-title-block">
+        <div class="fortune-title">夯宝啦</div>
+        <div class="fortune-date" id="fortuneDate">2026年4月7日·星期二</div>
+      </div>
+      <div>
+        <span class="tag-orange" id="fortuneTypeBadge">上签</span>
+      </div>
+    </div>
+
+    <!-- 签文卡片 -->
+    <div class="fortune-card">
+      <div class="fortune-star-icon">⭐</div>
+      <div class="fortune-type" id="fortuneType">上签</div>
+      <div class="fortune-subtitle">今日运势 · 第廿三签</div>
+      <div class="fortune-poem">
+        <p id="fortunePoem1">金光照耀前路明</p>
+        <p id="fortunePoem2">宜追辉煌莫迟疑</p>
+        <p id="fortunePoem3">深挖细寻得宝藏</p>
+        <p id="fortunePoem4">今日财运随君意</p>
+      </div>
+      <div class="fortune-bonus">
+        <span>⭐</span>
+        <span id="fortuneBonus">稀有矿出现率 +20%</span>
+      </div>
+    </div>
+
+    <!-- 信息栏 -->
+    <div class="fortune-info">
+      <div class="fortune-info-row">
+        <span>⛏️</span>
+        <span id="fortuneHint" style="font-size:12px;">"金光照耀前路明"— 今日金矿脉或有佳缘</span>
+      </div>
+      <div class="fortune-info-row">
+        <span style="font-size:13px;">今日体力</span>
+        <div class="stamina-dots" id="staminaDots"></div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="fortune-actions">
+      <button class="btn-orange" onclick="goToPage('page-mine')">⛏️ 开始挖矿</button>
+      <button class="btn-white" onclick="showSignOverlay()">🪄 重新摇签</button>
+    </div>
+
+    <!-- 摇签覆盖层 -->
+    <div class="sign-overlay" id="signOverlay">
+      <div class="sign-overlay-title">🪄 夯宝啦</div>
+      <div class="sign-overlay-date" id="signOverlayDate">2026年4月7日 · 星期二</div>
+
+      <!-- CSS签筒 -->
+      <div class="sign-tube-wrap" id="signTubeWrap" onclick="onTubeClick()">
+        <!-- 签（星星笑脸，从筒口伸出） -->
+        <div class="sign-sticks" id="signSticks">
+          <div class="sign-stick" style="--delay:1.0s">
+            <div class="sign-star">⭐</div>
+            <div class="sign-rod"></div>
+          </div>
+          <div class="sign-stick" style="--delay:1.3s; margin-bottom:6px;">
+            <div class="sign-star">⭐</div>
+            <div class="sign-rod"></div>
+          </div>
+          <div class="sign-stick" style="--delay:0.8s">
+            <div class="sign-star">⭐</div>
+            <div class="sign-rod"></div>
+          </div>
+        </div>
+
+        <!-- 筒顶边框 -->
+        <div class="tube-top-ring"></div>
+        <!-- 筒身 -->
+        <div class="tube-body">
+          <div class="tube-badge">运</div>
+        </div>
+        <!-- 筒底边框 -->
+        <div class="tube-bottom-ring"></div>
+      </div>
+
+      <div class="sign-hint-text">摇一摇·求今日运签</div>
+      <div class="sign-sub-text">或点击签筒</div>
+      <div class="sign-shake-tip" id="signShakeTip">📱 摇动手机 或 点击签筒</div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 2: 矿脉选择 ==================== -->
+  <div class="page" id="page-mine">
+    <div class="page-header">
+      <div class="page-title"><span class="star-icon">⭐</span>选择矿脉</div>
+      <div style="font-size:12px; color:#888;">体力 <b style="color:#F97316;" id="mineStamina">6/6</b></div>
+    </div>
+
+    <div class="mine-cards">
+      <!-- 黄金矿脉 -->
+      <div class="mine-card recommended" onclick="startMining('gold')">
+        <div class="mine-recommend-badge">✨ 签文推荐</div>
+        <div class="mine-card-top">
+          <div class="mine-emoji">🥇</div>
+          <div class="mine-info">
+            <div class="mine-name">黄金矿脉</div>
+            <div class="mine-desc">今日金光照耀，宜追逐辉煌</div>
+          </div>
+        </div>
+        <div class="mine-tags">
+          <span class="mine-tag">主产：黄金</span>
+          <span class="mine-tag rare">稀有：铂金</span>
+          <span class="mine-tag" style="background:#FEE2E2;color:#DC2626;">稀有率+20%</span>
+        </div>
+        <button class="btn-orange" onclick="event.stopPropagation(); startMining('gold')">⛏️ 开始挖矿</button>
+      </div>
+
+      <!-- 白银矿脉 -->
+      <div class="mine-card" onclick="startMining('silver')">
+        <div class="mine-card-top">
+          <div class="mine-emoji">🥈</div>
+          <div class="mine-info">
+            <div class="mine-name">白银矿脉</div>
+            <div class="mine-desc">价格适中，产量丰厚</div>
+          </div>
+        </div>
+        <div class="mine-tags">
+          <span class="mine-tag">主产：白银</span>
+          <span class="mine-tag rare">稀有：宝石</span>
+        </div>
+        <button class="btn-orange" onclick="event.stopPropagation(); startMining('silver')">⛏️ 开始挖矿</button>
+      </div>
+
+      <!-- 珍珠海床 -->
+      <div class="mine-card" onclick="startMining('pearl')">
+        <div class="mine-card-top">
+          <div class="mine-emoji">🦪</div>
+          <div class="mine-info">
+            <div class="mine-name">珍珠海床</div>
+            <div class="mine-desc">价格波动大，惊喜多</div>
+          </div>
+        </div>
+        <div class="mine-tags">
+          <span class="mine-tag">主产：珍珠</span>
+          <span class="mine-tag rare">稀有：深海珊瑚</span>
+        </div>
+        <button class="btn-orange" onclick="event.stopPropagation(); startMining('pearl')">⛏️ 开始挖矿</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 3: 挖矿游戏 ==================== -->
+  <div class="page" id="page-game">
+    <div class="game-header">
+      <div class="game-mine-name" id="gameMineLabel">🥇 黄金矿脉</div>
+      <div class="game-bonus" id="gameBonusLabel">+20%</div>
+      <div class="game-stamina">⚡ <span id="gameStamina">5/6</span></div>
+    </div>
+
+    <div class="game-progress-bar">
+      <div class="game-progress-fill" id="gameProgressFill"></div>
+    </div>
+
+    <div class="game-timer-row">
+      <div>
+        <div style="font-size:11px; color:#888; margin-bottom:2px;">剩余时间</div>
+        <div class="game-timer" id="gameTimer">30</div>
+      </div>
+      <div class="game-score-row">
+        <div class="score-badge score-gold">🪙 <span id="gameGold">0g</span></div>
+        <div class="score-badge score-gem">💎 <span id="gameGem">0g</span></div>
+      </div>
+    </div>
+
+    <!-- 矿场 -->
+    <div class="mine-field" id="mineField">
+      <div class="mine-field-texture"></div>
+      <!-- 矿石由JS动态生成 -->
+    </div>
+
+    <div class="game-info-bar">
+      <div class="game-tip">💡 闪光的是稀有矿，需多点几下！</div>
+      <button class="game-end-btn" onclick="endMining()">🚩 提前结工</button>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 4: 结算 ==================== -->
+  <div class="page" id="page-result">
+    <div class="page-header">
+      <div class="page-title"><span class="star-icon">🏆</span>今日挖矿结算</div>
+      <div style="font-size:11px; color:#888;" id="resultDateLabel">2026年4月7日·黄金矿脉</div>
+    </div>
+
+    <!-- 积分卡 -->
+    <div class="result-score-card">
+      <div class="result-score-label">🎉 本局收获积分</div>
+      <div class="result-score-num" id="resultScore">5,834</div>
+      <div class="result-score-sub" id="resultScoreSub">含上签加成 ×1.2 · 本周累计 24,160分</div>
+    </div>
+
+    <!-- 收获 -->
+    <div class="result-harvest">
+      <div class="harvest-item">
+        <div class="harvest-emoji">🪙</div>
+        <div class="harvest-name">黄金</div>
+        <div class="harvest-amount" id="harvestGold">12g</div>
+        <div class="harvest-price">¥612.5/g</div>
+      </div>
+      <div class="harvest-item">
+        <div class="harvest-emoji">💎</div>
+        <div class="harvest-name">铂金</div>
+        <div class="harvest-amount" id="harvestGem">0.5g</div>
+        <div class="harvest-price" style="color:#8B5CF6;">稀有 ×3</div>
+      </div>
+      <div class="harvest-item">
+        <div class="harvest-emoji">🥚</div>
+        <div class="harvest-name">彩蛋矿</div>
+        <div class="harvest-amount" id="harvestEgg">未触发</div>
+        <div class="harvest-price" style="color:#9CA3AF;">-</div>
+      </div>
+    </div>
+
+    <!-- 行情参考 -->
+    <div class="result-market">
+      <div class="market-title">📊 今日行情参考</div>
+      <div class="market-row">
+        <div class="market-name">🪙 黄金现货</div>
+        <div class="market-price">¥612.50/g</div>
+        <div class="market-change up">↑ +0.8%</div>
+      </div>
+      <div class="market-row">
+        <div class="market-name">🥈 白银现货</div>
+        <div class="market-price">¥7.82/g</div>
+        <div class="market-change down">↓ -0.3%</div>
+      </div>
+      <div class="market-row">
+        <div class="market-name">🦪 珍珠参考</div>
+        <div class="market-price">¥48.60/颗</div>
+        <div class="market-change up">↑ +2.1%</div>
+      </div>
+    </div>
+
+    <!-- 好友排行 -->
+    <div class="result-rank">
+      <div class="rank-title">👥 好友积分排行</div>
+      <div class="rank-row">
+        <div class="rank-badge rank-1">🥇</div>
+        <div class="rank-name">张三</div>
+        <div class="rank-score">8,240分</div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-badge rank-2">🥈</div>
+        <div class="rank-name">李四</div>
+        <div class="rank-score">6,890分</div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-badge rank-3">🥉</div>
+        <div class="rank-name">王五</div>
+        <div class="rank-score">5,834分</div>
+      </div>
+    </div>
+
+    <!-- 操作 -->
+    <div class="result-actions">
+      <button class="btn-orange" onclick="shareResult()">📤 分享成果</button>
+      <button class="btn-white" onclick="goToPage('page-shop')">🛍️ 去商城</button>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 5: 商城 ==================== -->
+  <div class="page" id="page-shop">
+    <div class="shop-header">
+      <div class="page-title"><span class="star-icon">⭐</span>矿工商城</div>
+      <div class="shop-score-badge">⭐ 24,160分</div>
+    </div>
+
+    <div class="shop-tabs">
+      <div class="shop-tab active" onclick="switchShopTab(this)">全部</div>
+      <div class="shop-tab" onclick="switchShopTab(this)">矿道解锁</div>
+      <div class="shop-tab" onclick="switchShopTab(this)">挖矿皮肤</div>
+      <div class="shop-tab" onclick="switchShopTab(this)">地图主题</div>
+      <div class="shop-tab" onclick="switchShopTab(this)">签文</div>
+    </div>
+
+    <div class="shop-grid">
+      <div class="shop-item">
+        <div class="shop-item-icon">⛏️</div>
+        <div class="shop-item-name">默认矿道</div>
+        <div class="shop-item-desc">金/银/珍珠三条基础矿脉</div>
+        <button class="shop-item-btn owned">✅ 已拥有</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon">🌫️</div>
+        <div class="shop-item-name">迷雾矿山</div>
+        <div class="shop-item-desc">隐藏矿脉·产出钻石 风险更大</div>
+        <button class="shop-item-btn buy">500分 购买</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon">✨</div>
+        <div class="shop-item-name">金铲子</div>
+        <div class="shop-item-desc">稀有矿概率+5% 炫酷外观</div>
+        <button class="shop-item-btn buy">800分 购买</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon">🌊</div>
+        <div class="shop-item-name">水下世界</div>
+        <div class="shop-item-desc">梦幻深海场景主题</div>
+        <button class="shop-item-btn buy">600分 购买</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon">🚀</div>
+        <div class="shop-item-name">星际矿场</div>
+        <div class="shop-item-desc">太空矿脉·产出陨石</div>
+        <button class="shop-item-btn buy">1,500分 购买</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon">📜</div>
+        <div class="shop-item-name">签文精解</div>
+        <div class="shop-item-desc">今日签文详细解读</div>
+        <button class="shop-item-btn buy">50分/次</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 6: 排行榜 ==================== -->
+  <div class="page" id="page-rank">
+    <div class="page-header">
+      <div class="page-title"><span class="star-icon">⭐</span>挖矿排行榜</div>
+      <div class="tag-orange">今日</div>
+    </div>
+
+    <div class="rank-tabs">
+      <div class="rank-tab active" onclick="switchRankTab(this, 'today')">今日积分</div>
+      <div class="rank-tab" onclick="switchRankTab(this, 'week')">本周达人</div>
+      <div class="rank-tab" onclick="switchRankTab(this, 'total')">历史总榜</div>
+    </div>
+
+    <!-- 领奖台 -->
+    <div class="rank-podium">
+      <div class="podium-item podium-2">
+        <div class="podium-badge">🥈</div>
+        <div class="podium-avatar">👦</div>
+        <div class="podium-name">李四</div>
+        <div class="podium-score">98,500分</div>
+        <div class="podium-block">2</div>
+      </div>
+      <div class="podium-item podium-1">
+        <div class="podium-badge">👑</div>
+        <div class="podium-avatar">👨</div>
+        <div class="podium-name">张三</div>
+        <div class="podium-score">126,800分</div>
+        <div class="podium-block">1</div>
+      </div>
+      <div class="podium-item podium-3">
+        <div class="podium-badge">🥉</div>
+        <div class="podium-avatar">🧑</div>
+        <div class="podium-name">赵六</div>
+        <div class="podium-score">86,200分</div>
+        <div class="podium-block">3</div>
+      </div>
+    </div>
+
+    <div class="rank-list">
+      <div class="rank-list-item">
+        <div class="rank-list-num rank-num-4">4</div>
+        <div class="rank-list-avatar">👩</div>
+        <div class="rank-list-name">孙七</div>
+        <div class="rank-list-score">75,300分</div>
+      </div>
+      <div class="rank-list-item">
+        <div class="rank-list-num rank-num-5">5</div>
+        <div class="rank-list-avatar">🧔</div>
+        <div class="rank-list-name">周八</div>
+        <div class="rank-list-score">69,800分</div>
+      </div>
+      <div class="rank-list-item">
+        <div class="rank-list-num rank-num-6">6</div>
+        <div class="rank-list-avatar">👤</div>
+        <div class="rank-list-name">我（你）</div>
+        <div class="rank-list-score">24,160分</div>
+      </div>
+    </div>
+
+    <div style="text-align:center; padding: 10px 0 16px; color:#888; font-size:12px;">仅展示好友排行</div>
+
+    <div style="padding: 0 16px 16px;">
+      <button class="btn-orange" onclick="goToPage('page-mine')">⛏️ 去挖矿超越他们！</button>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 7: 我的 ==================== -->
+  <div class="page" id="page-profile">
+    <div class="profile-header">
+      <div class="profile-avatar">😊</div>
+      <div>
+        <div class="profile-name">矿工小张</div>
+        <div class="profile-subtitle">⭐ 本周积分 24,160分 · 上签加持中</div>
+      </div>
+    </div>
+
+    <div class="profile-stats">
+      <div class="stat-item">
+        <div class="stat-num">42</div>
+        <div class="stat-label">累计挖矿</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">24,160</div>
+        <div class="stat-label">本周积分</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">上签</div>
+        <div class="stat-label">今日签文</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">我的收藏</div>
+      <div class="profile-row">
+        <div class="profile-row-icon">📜</div>
+        <div class="profile-row-label">往日签文</div>
+        <div class="profile-row-right">›</div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">🛍️</div>
+        <div class="profile-row-label">已购道具</div>
+        <div class="profile-row-right">›</div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">🏆</div>
+        <div class="profile-row-label">我的成就</div>
+        <div class="profile-row-right">›</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">设置</div>
+      <div class="profile-row">
+        <div class="profile-row-icon">🔔</div>
+        <div class="profile-row-label">消息通知</div>
+        <div class="profile-row-right">›</div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-row-icon">❓</div>
+        <div class="profile-row-label">帮助与反馈</div>
+        <div class="profile-row-right">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 底部导航 ==================== -->
+  <div class="navbar">
+    <div class="nav-item active" id="nav-fortune" onclick="goToPage('page-fortune'); setNav('nav-fortune')">
+      <div class="nav-icon">🏠</div>
+      <div>首页</div>
+    </div>
+    <div class="nav-item" id="nav-mine" onclick="goToPage('page-mine'); setNav('nav-mine')">
+      <div class="nav-icon">⛏️</div>
+      <div>挖矿</div>
+    </div>
+    <div class="nav-item" id="nav-shop" onclick="goToPage('page-shop'); setNav('nav-shop')">
+      <div class="nav-icon">🛍️</div>
+      <div>商城</div>
+    </div>
+    <div class="nav-item" id="nav-rank" onclick="goToPage('page-rank'); setNav('nav-rank')">
+      <div class="nav-icon">🏆</div>
+      <div>排行</div>
+    </div>
+    <div class="nav-item" id="nav-profile" onclick="goToPage('page-profile'); setNav('nav-profile')">
+      <div class="nav-icon">👤</div>
+      <div>我的</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==================== 状态数据 ====================
+const GameState = {
+  stamina: 6,
+  totalScore: 24160,
+  currentMine: 'gold',
+  fortuneType: '上签',
+  fortuneBonus: 1.2,
+  sessionGold: 0,
+  sessionGem: 0,
+};
+
+const FORTUNES = [
+  {
+    type: '上上签', bonus: 1.5, bonusText: '稀有矿出现率 +50% · 体力+1',
+    poem: ['紫气东来百福临','鸿运高照步青云','勤耕不辍必有获','今日宜进万事顺'],
+    hint: '"紫气东来百福临"— 今日一切矿脉皆有奇遇',
+    star: '🌟', rareBonus: 0.5
+  },
+  {
+    type: '上签', bonus: 1.2, bonusText: '稀有矿出现率 +20%',
+    poem: ['金光照耀前路明','宜追辉煌莫迟疑','深挖细寻得宝藏','今日财运随君意'],
+    hint: '"金光照耀前路明"— 今日金矿脉或有佳缘',
+    star: '⭐', rareBonus: 0.2
+  },
+  {
+    type: '中签', bonus: 1.0, bonusText: '普通状态·平稳发挥',
+    poem: ['平心静气待时机','不急不缓步步稳','勤劳终有所回报','中庸之道最长久'],
+    hint: '"平心静气待时机"— 今日按部就班，稳扎稳打',
+    star: '✨', rareBonus: 0
+  },
+  {
+    type: '下签', bonus: 0.9, bonusText: '矿物品质下降 ×0.9',
+    poem: ['阴云遮蔽有时散','逆境之中磨心志','守得云开见月明','蛰伏待机择日行'],
+    hint: '"阴云遮蔽有时散"— 今日矿脉稍显暗淡，小心经营',
+    star: '💫', rareBonus: -0.1
+  },
+  {
+    type: '下下签', bonus: 1.0, bonusText: '逆天改命：彩蛋矿概率+20%',
+    poem: ['山穷水尽疑无路','柳暗花明又一村','绝处逢生有奇缘','逆天改命看今朝'],
+    hint: '"绝处逢生有奇缘"— 今日或有神秘彩蛋矿出现！',
+    star: '🌈', rareBonus: 0
+  }
+];
+
+const MINE_CONFIG = {
+  gold:   { label: '🥇 黄金矿脉', goldUnit: 1.0, gemUnit: 0.5, oreEmoji: '🟡', gemEmoji: '🪙' },
+  silver: { label: '🥈 白银矿脉', goldUnit: 0.6, gemUnit: 0.8, oreEmoji: '⚪', gemEmoji: '💠' },
+  pearl:  { label: '🦪 珍珠海床', goldUnit: 0.8, gemUnit: 1.2, oreEmoji: '🟣', gemEmoji: '🔮' },
+};
+
+let currentFortune = FORTUNES[1];
+
+// ==================== 页面导航 ====================
+function goToPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+
+  // 进入挖矿游戏时初始化
+  if (pageId === 'page-game') {
+    initGame();
+  }
+}
+
+function setNav(navId) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(navId).classList.add('active');
+
+  const map = {
+    'nav-fortune': 'page-fortune',
+    'nav-mine':    'page-mine',
+    'nav-shop':    'page-shop',
+    'nav-rank':    'page-rank',
+    'nav-profile': 'page-profile',
+  };
+}
+
+// ==================== 签文系统 ====================
+let signShaking = false;
+let shakeTimer = null;
+let motionEnabled = false;
+
+function showSignOverlay() {
+  const overlay = document.getElementById('signOverlay');
+  overlay.classList.add('show');
+  signShaking = false;
+
+  // 更新日期
+  const now = new Date();
+  const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  document.getElementById('signOverlayDate').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 · ${days[now.getDay()]}`;
+
+  // 尝试申请摇一摇权限（iOS 13+）
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(state => {
+      if (state === 'granted') setupShake();
+    });
+  } else if (typeof DeviceMotionEvent !== 'undefined') {
+    setupShake();
+  }
+
+  // 重置签筒状态
+  const wrap = document.getElementById('signTubeWrap');
+  wrap.classList.remove('throwing');
+  wrap.classList.add('shaking');
+}
+
+function setupShake() {
+  if (motionEnabled) return;
+  motionEnabled = true;
+  let lastAccel = 0;
+  window.addEventListener('devicemotion', (e) => {
+    const acc = e.accelerationIncludingGravity;
+    if (!acc) return;
+    const total = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+    if (total > 30 && total - lastAccel > 15 && !signShaking) {
+      onTubeClick();
+    }
+    lastAccel = total;
+  });
+}
+
+function onTubeClick() {
+  if (signShaking) return;
+  signShaking = true;
+
+  const wrap = document.getElementById('signTubeWrap');
+  const overlay = document.getElementById('signOverlay');
+
+  // 加速摇晃
+  wrap.style.animation = 'tube-shake 0.08s ease-in-out infinite';
+
+  // 0.8s 后签飞出
+  setTimeout(() => {
+    flyOutSigns(overlay, wrap);
+  }, 800);
+}
+
+function flyOutSigns(overlay, wrap) {
+  const sticks = document.getElementById('signSticks');
+  const stars = sticks.querySelectorAll('.sign-star');
+  const wrapRect = wrap.getBoundingClientRect();
+  const overlayRect = overlay.getBoundingClientRect();
+
+  // 每根签依次飞出
+  stars.forEach((star, i) => {
+    setTimeout(() => {
+      const flying = document.createElement('div');
+      flying.className = 'sign-flying';
+      flying.textContent = '⭐';
+
+      // 起始位置：签筒顶部
+      const startX = wrapRect.left - overlayRect.left + 40 + (i - 1) * 14;
+      const startY = wrapRect.top - overlayRect.top + 10;
+      flying.style.left = startX + 'px';
+      flying.style.top = startY + 'px';
+
+      // 随机飞行方向
+      const dirs = [
+        { fx1:'-30px', fy1:'-80px', fr1:'-30deg', fx2:'-60px', fy2:'-140px', fr2:'-60deg', fx3:'-90px', fy3:'-200px', fr3:'-90deg' },
+        { fx1:'0px',   fy1:'-90px', fr1:'10deg',  fx2:'10px',  fy2:'-160px', fr2:'20deg',  fx3:'20px',  fy3:'-240px', fr3:'30deg'  },
+        { fx1:'30px',  fy1:'-75px', fr1:'40deg',  fx2:'70px',  fy2:'-140px', fr2:'80deg',  fx3:'100px', fy3:'-200px', fr3:'120deg' },
+      ];
+      const d = dirs[i];
+      flying.style.setProperty('--fx1', d.fx1);
+      flying.style.setProperty('--fy1', d.fy1);
+      flying.style.setProperty('--fr1', d.fr1);
+      flying.style.setProperty('--fx2', d.fx2);
+      flying.style.setProperty('--fy2', d.fy2);
+      flying.style.setProperty('--fr2', d.fr2);
+      flying.style.setProperty('--fx3', d.fx3);
+      flying.style.setProperty('--fy3', d.fy3);
+      flying.style.setProperty('--fr3', d.fr3);
+      flying.style.setProperty('--duration', `${0.7 + i * 0.1}s`);
+      overlay.appendChild(flying);
+      setTimeout(() => flying.remove(), 900);
+    }, i * 120);
+  });
+
+  // 签筒倒出动画
+  setTimeout(() => {
+    wrap.classList.remove('shaking');
+    wrap.style.animation = '';
+    wrap.classList.add('throwing');
+  }, 200);
+
+  // 随机抽签结果
+  const idx = Math.floor(Math.random() * FORTUNES.length);
+  currentFortune = FORTUNES[idx];
+  GameState.fortuneType = currentFortune.type;
+  GameState.fortuneBonus = currentFortune.bonus;
+
+  // 1.2s 后关闭覆盖层，显示签文（带揭示动画）
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    signShaking = false;
+    wrap.classList.remove('throwing');
+    wrap.classList.add('shaking');
+    wrap.style.animation = '';
+
+    updateFortuneUI();
+
+    // 签文卡片揭示动画
+    const card = document.querySelector('.fortune-card');
+    card.classList.remove('fortune-reveal');
+    void card.offsetWidth;
+    card.classList.add('fortune-reveal');
+  }, 1300);
+}
+
+function updateFortuneUI() {
+  const f = currentFortune;
+  document.getElementById('fortuneType').textContent = f.type;
+  document.getElementById('fortuneTypeBadge').textContent = f.type;
+  document.getElementById('fortuneBonus').textContent = f.bonusText;
+  document.getElementById('fortuneHint').textContent = f.hint;
+  document.getElementById('fortunePoem1').textContent = f.poem[0];
+  document.getElementById('fortunePoem2').textContent = f.poem[1];
+  document.getElementById('fortunePoem3').textContent = f.poem[2];
+  document.getElementById('fortunePoem4').textContent = f.poem[3];
+  document.querySelector('.fortune-star-icon').textContent = f.star;
+}
+
+function renderStamina() {
+  const dots = document.getElementById('staminaDots');
+  dots.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'stamina-dot' + (i < GameState.stamina ? '' : ' empty');
+    dots.appendChild(dot);
+  }
+  document.getElementById('mineStamina').textContent = `${GameState.stamina}/6`;
+  document.getElementById('gameStamina').textContent = `${GameState.stamina}/6`;
+}
+
+// ==================== 矿脉选择 ====================
+function startMining(type) {
+  if (GameState.stamina <= 0) {
+    alert('今日体力已用完！明天0点恢复 ⚡');
+    return;
+  }
+  GameState.currentMine = type;
+  const cfg = MINE_CONFIG[type];
+  document.getElementById('gameMineLabel').textContent = cfg.label;
+  document.getElementById('gameBonusLabel').textContent =
+    currentFortune.bonus > 1 ? `+${Math.round((currentFortune.bonus-1)*100)}%` :
+    currentFortune.bonus < 1 ? `${Math.round((currentFortune.bonus-1)*100)}%` : '无加成';
+  goToPage('page-game');
+  setNav('');
+}
+
+// ==================== 挖矿游戏 ====================
+let gameTimer = null;
+let gameTimeLeft = 30;
+let ores = [];
+let gameGold = 0;
+let gameGem = 0;
+
+const ORE_TYPES = [
+  { type: 'normal', emoji: '🪨', hp: 1, weight: 60, goldReward: 0.5, gemReward: 0 },
+  { type: 'hard',   emoji: '⬛', hp: 3, weight: 30, goldReward: 1.2, gemReward: 0 },
+  { type: 'rare',   emoji: '✨', hp: 5, weight: 10, goldReward: 0,   gemReward: 0.5 },
+];
+
+function weightedRandom(items) {
+  const totalWeight = items.reduce((s, i) => s + i.weight, 0);
+  let r = Math.random() * totalWeight;
+  for (const item of items) {
+    r -= item.weight;
+    if (r <= 0) return item;
+  }
+  return items[items.length - 1];
+}
+
+function initGame() {
+  clearInterval(gameTimer);
+  gameTimeLeft = 30;
+  gameGold = 0;
+  gameGem = 0;
+  ores = [];
+
+  document.getElementById('gameTimer').textContent = '30';
+  document.getElementById('gameProgressFill').style.width = '100%';
+  document.getElementById('gameGold').textContent = '0g';
+  document.getElementById('gameGem').textContent = '0g';
+
+  const field = document.getElementById('mineField');
+  field.innerHTML = '<div class="mine-field-texture"></div>';
+
+  // 生成初始矿石
+  const cfg = MINE_CONFIG[GameState.currentMine];
+  let types = [...ORE_TYPES];
+  if (currentFortune.rareBonus > 0) {
+    types = types.map(t => t.type === 'rare' ? {...t, weight: t.weight + currentFortune.rareBonus * 100} : t);
+  }
+
+  for (let i = 0; i < 9; i++) {
+    spawnOre(field, types, cfg);
+  }
+
+  // 开始倒计时
+  gameTimer = setInterval(() => {
+    gameTimeLeft--;
+    document.getElementById('gameTimer').textContent = gameTimeLeft;
+    const pct = (gameTimeLeft / 30) * 100;
+    document.getElementById('gameProgressFill').style.width = pct + '%';
+
+    if (gameTimeLeft <= 5) {
+      document.getElementById('gameTimer').style.color = '#EF4444';
+      document.getElementById('gameTimer').style.animation = 'rare-glow 0.5s infinite alternate';
+    }
+
+    if (gameTimeLeft <= 0) {
+      endMining();
+    }
+  }, 1000);
+}
+
+function spawnOre(field, types, cfg) {
+  const oreType = weightedRandom(types || ORE_TYPES);
+  const fieldW = field.offsetWidth || 355;
+  const fieldH = field.offsetHeight || 310;
+
+  // 随机位置（避开边缘）
+  const x = 20 + Math.random() * (fieldW - 80);
+  const y = 20 + Math.random() * (fieldH - 90);
+
+  const ore = document.createElement('div');
+  ore.className = `ore ore-${oreType.type}`;
+  ore.style.left = x + 'px';
+  ore.style.top = y + 'px';
+  ore.dataset.type = oreType.type;
+  ore.dataset.hp = oreType.hp;
+  ore.dataset.maxHp = oreType.hp;
+  ore.dataset.goldReward = oreType.goldReward;
+  ore.dataset.gemReward = oreType.gemReward;
+
+  const body = document.createElement('div');
+  body.className = 'ore-body';
+  body.textContent = oreType.emoji;
+
+  const hpBar = document.createElement('div');
+  hpBar.className = 'ore-hp';
+  for (let j = 0; j < oreType.hp; j++) {
+    const dot = document.createElement('div');
+    dot.className = 'ore-hp-dot';
+    hpBar.appendChild(dot);
+  }
+
+  ore.appendChild(body);
+  ore.appendChild(hpBar);
+  ore.addEventListener('click', () => hitOre(ore, field));
+  field.appendChild(ore);
+  ores.push(ore);
+}
+
+function hitOre(ore, field) {
+  if (!ore.parentNode) return;
+
+  // 打击动画
+  ore.classList.remove('hit');
+  void ore.offsetWidth;
+  ore.classList.add('hit');
+
+  let hp = parseInt(ore.dataset.hp) - 1;
+  ore.dataset.hp = hp;
+
+  // 更新HP点
+  const dots = ore.querySelectorAll('.ore-hp-dot');
+  dots.forEach((dot, i) => {
+    if (i >= hp) dot.classList.add('empty');
+  });
+
+  if (hp <= 0) {
+    // 收获矿物
+    const goldReward = parseFloat(ore.dataset.goldReward) * GameState.fortuneBonus;
+    const gemReward = parseFloat(ore.dataset.gemReward) * GameState.fortuneBonus;
+    const cfg = MINE_CONFIG[GameState.currentMine];
+
+    if (goldReward > 0) {
+      gameGold += goldReward;
+      showFloatText(ore, `+${goldReward.toFixed(1)}g ${cfg.oreEmoji}`, 'gold', field);
+    }
+    if (gemReward > 0) {
+      gameGem += gemReward;
+      showFloatText(ore, `+${gemReward.toFixed(1)}g 💎`, 'gem', field);
+    }
+
+    // 爆炸粒子
+    spawnParticles(ore, field);
+
+    // 移除矿石
+    ore.style.transition = 'all 0.3s';
+    ore.style.transform = 'scale(0) rotate(180deg)';
+    ore.style.opacity = '0';
+    setTimeout(() => { ore.remove(); }, 300);
+
+    // 更新显示
+    document.getElementById('gameGold').textContent = gameGold.toFixed(1) + 'g';
+    document.getElementById('gameGem').textContent = gameGem.toFixed(1) + 'g';
+
+    // 1.5秒后生成新矿石
+    setTimeout(() => {
+      if (gameTimeLeft > 0) {
+        spawnOre(field, null, MINE_CONFIG[GameState.currentMine]);
+      }
+    }, 1500);
+  }
+}
+
+function showFloatText(ore, text, type, field) {
+  const ft = document.createElement('div');
+  ft.className = `float-text ${type}`;
+  ft.textContent = text;
+  ft.style.left = (parseFloat(ore.style.left) + 10) + 'px';
+  ft.style.top = (parseFloat(ore.style.top) - 10) + 'px';
+  field.appendChild(ft);
+  setTimeout(() => ft.remove(), 1200);
+}
+
+function spawnParticles(ore, field) {
+  const colors = ['#FCD34D', '#F59E0B', '#FCA5A5', '#86EFAC', '#A78BFA'];
+  const x = parseFloat(ore.style.left) + 26;
+  const y = parseFloat(ore.style.top) + 26;
+
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    const angle = (i / 6) * Math.PI * 2;
+    const dist = 30 + Math.random() * 30;
+    p.style.setProperty('--px', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--py', Math.sin(angle) * dist + 'px');
+    field.appendChild(p);
+    setTimeout(() => p.remove(), 600);
+  }
+}
+
+function endMining() {
+  clearInterval(gameTimer);
+  gameTimeLeft = 0;
+
+  // 扣除体力
+  if (GameState.stamina > 0) {
+    GameState.stamina--;
+    renderStamina();
+  }
+
+  // 计算积分
+  const cfg = MINE_CONFIG[GameState.currentMine];
+  const goldPrice = 612.5;
+  const gemPrice = 1800;
+  const score = Math.round((gameGold * goldPrice + gameGem * gemPrice) * GameState.fortuneBonus);
+  GameState.totalScore += score;
+
+  // 更新结算页
+  document.getElementById('resultScore').textContent = score.toLocaleString();
+  document.getElementById('resultScoreSub').textContent =
+    `含${currentFortune.type}加成 ×${currentFortune.bonus} · 本周累计 ${GameState.totalScore.toLocaleString()}分`;
+  document.getElementById('harvestGold').textContent = gameGold.toFixed(1) + 'g';
+  document.getElementById('harvestGem').textContent = gameGem.toFixed(1) + 'g';
+  document.getElementById('resultDateLabel').textContent = `2026年4月7日 · ${cfg.label.replace(/[🥇🥈🦪]\s/,'')}`;
+
+  goToPage('page-result');
+  setNav('nav-fortune');
+}
+
+// ==================== 商城 ====================
+function switchShopTab(el) {
+  document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ==================== 排行榜 ====================
+function switchRankTab(el) {
+  document.querySelectorAll('.rank-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ==================== 分享 ====================
+function shareResult() {
+  alert('🎉 分享功能\n\n（微信小程序中可生成分享图，在原型中暂时弹窗模拟）\n\n今日挖矿成果已复制到剪贴板！');
+}
+
+// ==================== 初始化 ====================
+function init() {
+  // 实时时间
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('statusTime').textContent = `${h}:${m}`;
+  }
+  updateTime();
+  setInterval(updateTime, 10000);
+
+  // 日期
+  const now = new Date();
+  const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  document.getElementById('fortuneDate').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日·${days[now.getDay()]}`;
+
+  // 渲染体力
+  renderStamina();
+
+  // 初始签文
+  updateFortuneUI();
+
+  // 首次进入自动弹出摇签界面（延迟400ms等页面渲染完）
+  setTimeout(() => showSignOverlay(), 400);
+}
+
+init();
+</script>
+</body>
+</html>
